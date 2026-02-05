@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -51,7 +52,21 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition);
+        if (piece == null) {
+            return null;
+        }
+
+        Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
+        ArrayList<ChessMove> validMoves = new ArrayList<>();
+
+        for (ChessMove move : possibleMoves) {
+            if (!moveLeavesKingInCheck(move, piece.getTeamColor())) {
+                validMoves.add(move);
+            }
+        }
+
+        return validMoves;
     }
 
     /**
@@ -111,6 +126,22 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    /** Checks if making a move would leave the team's king in check */
+    private boolean moveLeavesKingInCheck(ChessMove move, TeamColor teamColor) {
+        ChessBoard testBoard = board.copy();
+
+        ChessPiece piece = testBoard.getPiece(move.getStartPosition());
+        testBoard.addPiece(move.getStartPosition(), null);
+
+        if (move.getPromotionPiece() != null) {
+            testBoard.addPiece(move.getEndPosition(), new ChessPiece(teamColor, move.getPromotionPiece()));
+        } else {
+            testBoard.addPiece(move.getEndPosition(), piece);
+        }
+
+        return isKingInCheck(testBoard, teamColor);
     }
 
     /** Checks if the king of the given team is in check on the given board */
